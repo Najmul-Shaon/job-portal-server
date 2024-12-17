@@ -1,4 +1,9 @@
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+
+const jwt = require("jsonwebtoken");
+
+const cookieParser = require("cookie-parser");
+
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
@@ -8,6 +13,7 @@ const port = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
+app.use(cookieParser());
 
 app.get("/", (req, res) => {
   res.send("server running home");
@@ -36,6 +42,18 @@ async function run() {
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
     );
+
+    // auth related api
+    app.post("/jwt", async (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.JWT_SECRET, { expiresIn: "1h" });
+      res
+        .cookie("token", token, {
+          httpOnly: true,
+          secure: false,
+        })
+        .send({ success: true });
+    });
 
     // jobs related api
     const jobsCollection = client.db("jobPortal").collection("jobs");
